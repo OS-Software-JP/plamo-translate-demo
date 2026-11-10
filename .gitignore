@@ -1,0 +1,11 @@
+node_modules/
+dist/
+dist-*/
+public/litert-wasm/
+*.litertlm
+.env.local
+.env.*.local
+*.log
+.verify/
+.claude/settings.local.json
+docs/
