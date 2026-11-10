@@ -2,7 +2,7 @@ export const CONTEXT_LENGTHS = [2048, 8192, 32768] as const;
 export type ContextLength = (typeof CONTEXT_LENGTHS)[number];
 export const DEFAULT_CONTEXT_LENGTH: ContextLength = 8192;
 
-export type ModelId = '0.8b-int8' | '0.8b-int4' | '2b-int8' | '2b-int4';
+export type ModelId = '0.8b-int8' | '0.8b-int4' | '2b-int8' | '2b-int4' | '8b-int8' | '8b-int4';
 
 export interface ModelDefinition {
   id: ModelId;
@@ -17,16 +17,21 @@ export interface ModelDefinition {
   revision: string;
   /** 最大の重みである埋め込みの表のバイト数 (語彙数 × 次元数)。 */
   largestBufferBytes: number;
-  /** 読み込みと短文の翻訳の後の GPU 共有メモリの実測値 (表示用)。 */
+  /**
+   * 読み込みと短文の翻訳の後に増えた GPU メモリの実測値 (表示用)。0.8B と 2B は Intel の内蔵 GPU の共有メモリ、
+   * 8B は RTX 3090 の専用メモリで測った。
+   */
   gpuMemoryGiB: Record<ContextLength, number>;
 }
 
 const REVISION = '20261106';
-// 0.8B と 2B は Hugging Face のリポジトリが別なので、配信元も別に指定する。省略すると /models から取得する。
+// 0.8B、2B、8B は Hugging Face のリポジトリが別なので、配信元も別に指定する。省略すると /models から取得する。
 const BASE_URL_0_8B: string = import.meta.env.VITE_MODEL_BASE_URL_0_8B ?? '/models';
 const BASE_URL_2B: string = import.meta.env.VITE_MODEL_BASE_URL_2B ?? '/models';
+const BASE_URL_8B: string = import.meta.env.VITE_MODEL_BASE_URL_8B ?? '/models';
 const EMBEDDING_0_8B_BYTES = 107520 * 1536;
 const EMBEDDING_2B_BYTES = 107520 * 2560;
+const EMBEDDING_8B_BYTES = 107520 * 4096;
 
 export const MODELS: readonly ModelDefinition[] = [
   {
@@ -70,6 +75,26 @@ export const MODELS: readonly ModelDefinition[] = [
     largestBufferBytes: EMBEDDING_2B_BYTES,
     gpuMemoryGiB: {2048: 3.75, 8192: 4.28, 32768: 6.75},
   },
+  {
+    id: '8b-int8',
+    label: 'PLaMo 3 Translate 8B int8',
+    fileName: 'plamo-3-translate-8b-int8.litertlm',
+    baseUrl: BASE_URL_8B,
+    sizeBytes: 8601796608,
+    revision: REVISION,
+    largestBufferBytes: EMBEDDING_8B_BYTES,
+    gpuMemoryGiB: {2048: 16.2, 8192: 16.9, 32768: 19.96},
+  },
+  {
+    id: '8b-int4',
+    label: 'PLaMo 3 Translate 8B int4',
+    fileName: 'plamo-3-translate-8b-int4.litertlm',
+    baseUrl: BASE_URL_8B,
+    sizeBytes: 5005131776,
+    revision: REVISION,
+    largestBufferBytes: EMBEDDING_8B_BYTES,
+    gpuMemoryGiB: {2048: 10.0, 8192: 10.75, 32768: 13.81},
+  },
 ];
 
 // いちばん小さく速い 0.8B int4 (QAT 版) を既定にする。
@@ -92,7 +117,7 @@ export const cacheFileName = (model: ModelDefinition): string => `${model.revisi
 /** モデルのダウンロード先。Worker では import.meta を使わないので、主スレッドで組み立てて渡す。 */
 export const modelUrl = (model: ModelDefinition): string => `${model.baseUrl}/${model.fileName}`;
 
-/** プロンプトのトークン数を数えるための語彙 (pfnet/plamo-3-translate-0.8b の tokenizer.jsonl、2B も同じ)。 */
+/** プロンプトのトークン数を数えるための語彙 (pfnet/plamo-3-translate-0.8b の tokenizer.jsonl、2B と 8B も同じ)。 */
 export const tokenizerUrl = (): string =>
   new URL(`${import.meta.env.BASE_URL}tokenizer/plamo-3-translate.jsonl`, location.origin).href;
 

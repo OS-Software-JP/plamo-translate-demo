@@ -16,11 +16,14 @@ WebGPU に対応したブラウザ (最新の Chrome / Edge) が必要です。�
 | PLaMo 3 Translate 0.8B int4 (QAT 版、既定) | 0.58 GB | 1.5 GiB |
 | PLaMo 3 Translate 2B int8 | 2.92 GB | 6.3 GiB |
 | PLaMo 3 Translate 2B int4 | 1.75 GB | 4.3 GiB |
+| PLaMo 3 Translate 8B int8 | 8.60 GB | 16.9 GiB |
+| PLaMo 3 Translate 8B int4 | 5.01 GB | 10.8 GiB |
 
 モデルは次のリポジトリで配布しています。
 
 - [OS-Software/plamo-3-translate-0.8b-litert-lm](https://huggingface.co/OS-Software/plamo-3-translate-0.8b-litert-lm)
 - [OS-Software/plamo-3-translate-2b-litert-lm](https://huggingface.co/OS-Software/plamo-3-translate-2b-litert-lm)
+- [OS-Software/plamo-3-translate-8b-litert-lm](https://huggingface.co/OS-Software/plamo-3-translate-8b-litert-lm)
 
 ## 開発
 

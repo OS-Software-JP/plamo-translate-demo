@@ -24,7 +24,7 @@ const languageOptions = LANGUAGES.map(language => (
 export default function TranslationOptionsRow({options, actions, action, tonesAvailable}: TranslationOptionsRowProps) {
   const {source, target, form} = options;
   const formEnabled = target === 'ja';
-  // 口調を選べないとき (2B、または口調を使わない設定) は「指定なし」と表示する。選んだ口調は覚えておき、0.8B に戻すと使う。
+  // 口調を選べないとき (2B、8B、または口調を使わない設定) は「指定なし」と表示する。選んだ口調は覚えておき、0.8B に戻すと使う。
   const shownForm = !formEnabled || (isToneId(form) && !tonesAvailable) ? '' : form;
   return (
     <div className="flex flex-wrap items-end gap-x-5 gap-y-2">

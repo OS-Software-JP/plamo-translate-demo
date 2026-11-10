@@ -58,10 +58,10 @@ async function translateAndWait(chrome, item) {
   return chrome.waitState(`!['idle', 'loading', 'generating', 'stopping'].includes(v.translation.kind)`);
 }
 
-async function loadAndWait(chrome, modelId, contextLength) {
+async function loadAndWait(chrome, modelId, contextLength, timeoutMs) {
   await chrome.evaluate(`${store}.selectModel(${JSON.stringify(modelId)}); ${store}.selectContextLength(${contextLength})`);
   await chrome.evaluate(`void ${store}.load(); null`);
-  return chrome.waitState(`v.model.kind === 'ready' || v.model.kind === 'failed'`);
+  return chrome.waitState(`v.model.kind === 'ready' || v.model.kind === 'failed'`, timeoutMs);
 }
 
 /** 状態の遷移を記録する。 */
@@ -441,11 +441,14 @@ async function devSuite(pageUrl) {
   }
 }
 
-/** 4 モデルすべてで訳文を照合する。件数は仕様書の 3.1 節の値。 */
+/** 6 モデルすべてで訳文を照合する。件数は仕様書の 3.1 節の値。 */
 async function modelsSuite(pageUrl) {
   // 0.8B int4 は QAT 版。6 件は配布元の README の値 (ブラウザで短文 10 件中 6 件) で、このデモでは測り直していない。
-  const expected = {'0.8b-int8': 10, '0.8b-int4': 6, '2b-int8': 10, '2b-int4': 10};
-  const memory = {'0.8b-int8': 2.08, '0.8b-int4': 1.47, '2b-int8': 6.28, '2b-int4': 4.28};
+  // 8B の件数は、配布元の README の内蔵 GPU の値 (単体 GPU では int8 が 10 件、int4 が 5 件)。
+  const expected = {'0.8b-int8': 10, '0.8b-int4': 6, '2b-int8': 10, '2b-int4': 10, '8b-int8': 9, '8b-int4': 4};
+  const memory = {'0.8b-int8': 2.08, '0.8b-int4': 1.47, '2b-int8': 6.28, '2b-int4': 4.28, '8b-int8': 16.9, '8b-int4': 10.75};
+  // 参照出力はモデルの大きさごとに別 (元の実装の訳が違う)。
+  const referenceOf = modelId => ({'2b': 'reference_outputs_2b', '8b': 'reference_outputs_8b'})[modelId.split('-')[0]] ?? 'reference_outputs';
   const only = process.argv[3];
   for (const [modelId, minimum] of Object.entries(expected)) {
     if (only && modelId !== only) continue;
@@ -455,9 +458,10 @@ async function modelsSuite(pageUrl) {
       await chrome.waitState(`v.model.kind !== 'checking'`, 60000);
       await sleep(1500);
       const baseline = await chrome.gpuMemoryGiB();
-      const state = await loadAndWait(chrome, modelId, 8192);
+      // 8B は保存するファイルが 5〜9 GB あるので、長く待つ。
+      const state = await loadAndWait(chrome, modelId, 8192, 600000);
       check(`${modelId}: ダウンロードして読み込める`, state.model.kind === 'ready', {loadSeconds: +state.model.loadSeconds?.toFixed(1)});
-      const items = reference(modelId.startsWith('2b') ? 'reference_outputs_2b' : 'reference_outputs');
+      const items = reference(referenceOf(modelId));
       let exact = 0;
       const speeds = [];
       for (const item of items) {
@@ -467,7 +471,9 @@ async function modelsSuite(pageUrl) {
       }
       const gib = (await chrome.gpuMemoryGiB()) - baseline;
       check(`${modelId}: 短文の完全一致が ${minimum} 件以上`, exact >= minimum, {exact, total: items.length});
-      check(`${modelId}: GPU メモリが仕様書の値に近い`, Math.abs(gib - memory[modelId]) < 0.25, {measured: +gib.toFixed(2), spec: memory[modelId]});
+      // 8B の仕様書の値は単体 GPU のもの。内蔵 GPU では共有メモリを使い、0.4 GiB ほど多い。
+      const tolerance = modelId.startsWith('8b') ? 0.75 : 0.25;
+      check(`${modelId}: GPU メモリが仕様書の値に近い`, Math.abs(gib - memory[modelId]) < tolerance, {measured: +gib.toFixed(2), spec: memory[modelId]});
       const average = speeds.slice(1).reduce((sum, speed) => sum + speed, 0) / Math.max(speeds.length - 1, 1);
       console.log(`INFO  ${modelId}: 生成 ${average.toFixed(1)} トークン/秒`);
       results.push({name: `info: ${modelId} speed`, ok: true, detail: +average.toFixed(1)});

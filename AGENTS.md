@@ -56,7 +56,7 @@ bun run typecheck    # tsc --noEmit
 ```bash
 bun run verify            # 本番ビルド相当で、推論レイヤーと訳文を照合する
 bun run verify dev        # 開発サーバーで起動と翻訳だけを確かめる
-bun run verify models     # 4 モデルを照合し、GPU メモリと生成速度を測る
+bun run verify models     # 6 モデルを照合し、GPU メモリと生成速度を測る
 bun run verify:ui         # 実際のモデルで画面を操作して確かめる
 bun run verify:tabs       # 複数タブでの Engine の共有を確かめる
 bun run verify:tokenizer  # 自前のトークナイザーを元の実装の結果と照合する

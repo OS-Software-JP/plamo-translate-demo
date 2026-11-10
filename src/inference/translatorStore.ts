@@ -92,7 +92,7 @@ const isFormOption = (value: unknown): value is FormOption =>
 export const tonesAvailable = (modelId: ModelId): boolean => toneRowsOf(modelId) !== undefined;
 
 /**
- * 依頼する翻訳先と文体。翻訳先が日本語のときだけ文体の欄の値を使う。口調を選べないモデル (2B) では、
+ * 依頼する翻訳先と文体。翻訳先が日本語のときだけ文体の欄の値を使う。口調を選べないモデル (2B、8B) では、
  * 選んでいた口調を使わずに訳す (画面の欄も「指定なし」と表示する)。
  */
 function requestTarget(target: string, form: FormOption | '', modelId: ModelId): {target: string; form?: JapaneseForm} {
