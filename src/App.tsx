@@ -1,3 +1,4 @@
+import GitHubLink from './components/GitHubLink';
 import LicenseFooter from './components/LicenseFooter';
 import ModelPanel from './components/ModelPanel';
 import ThemeToggle from './components/ThemeToggle';
@@ -13,8 +14,12 @@ export default function App() {
     <div className="mx-auto flex min-h-dvh max-w-[1536px] flex-col gap-3 px-4 py-4 md:gap-4 md:px-12 md:py-5">
       <header className="flex flex-col gap-1">
         <div className="flex items-center justify-between gap-4 md:items-start">
-          <h1 className="font-serif text-2xl leading-tight font-bold md:text-4xl">PLaMo Translate Demo</h1>
-          <ThemeToggle />
+          {/* スマートフォン幅 (375 px) では、右のボタン 2 つと並べても 1 行に収まる大きさにする。 */}
+          <h1 className="font-serif text-[1.375rem] leading-tight font-bold md:text-4xl">PLaMo Translate Demo</h1>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <GitHubLink />
+          </div>
         </div>
         {/*
           スマートフォン幅では 1 行に収める。画面の幅いっぱいに置き、約物を詰め (palt)、幅に合わせて文字を小さくする。
